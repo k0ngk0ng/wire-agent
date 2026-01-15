@@ -26,11 +26,47 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Get version from tag
+        id: version
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
+
+      # Update version in package.json files
+      - name: Update version in package.json (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          # Update root package.json
+          sed -i.bak "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
+          # Update server package.json
+          sed -i.bak "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" server/package.json
+          # Update protocol package.json
+          sed -i.bak "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" packages/protocol/package.json
+          # Update desktop executor package.json
+          sed -i.bak "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" executors/desktop/package.json
+          # Cleanup backup files
+          find . -name "*.bak" -delete
+
+      - name: Update version in package.json (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $files = @("package.json", "server/package.json", "packages/protocol/package.json", "executors/desktop/package.json")
+          foreach ($file in $files) {
+            $content = Get-Content $file -Raw
+            $content = $content -replace '"version": ".*?"', "`"version`": `"$version`""
+            Set-Content $file $content -NoNewline
+          }
 
       # Linux dependencies for robotjs
       - name: Install Linux dependencies
@@ -47,6 +83,7 @@ jobs:
 
       # Package server
       - name: Package server
+        shell: bash
         run: |
           mkdir -p dist/server
           cp -r server/dist dist/server/
@@ -54,6 +91,7 @@ jobs:
 
       # Package desktop executor
       - name: Package desktop executor
+        shell: bash
         run: |
           mkdir -p dist/desktop
           cp -r executors/desktop/dist dist/desktop/
@@ -63,20 +101,22 @@ jobs:
       - name: Create archive (Unix)
         if: runner.os != 'Windows'
         run: |
+          VERSION=${{ steps.version.outputs.version }}
           cd dist
-          tar -czvf wire-agent-${{ matrix.platform }}.tar.gz server desktop
+          tar -czvf wire-agent-${VERSION}-${{ matrix.platform }}.tar.gz server desktop
 
       - name: Create archive (Windows)
         if: runner.os == 'Windows'
         run: |
+          $version = "${{ steps.version.outputs.version }}"
           cd dist
-          Compress-Archive -Path server, desktop -DestinationPath wire-agent-${{ matrix.platform }}.zip
+          Compress-Archive -Path server, desktop -DestinationPath "wire-agent-${version}-${{ matrix.platform }}.zip"
 
       # Upload artifacts
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wire-agent-${{ matrix.platform }}
+          name: wire-agent-${{ steps.version.outputs.version }}-${{ matrix.platform }}
           path: |
             dist/wire-agent-*.tar.gz
             dist/wire-agent-*.zip
