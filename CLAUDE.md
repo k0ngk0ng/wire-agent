@@ -100,6 +100,106 @@ npm run build:server
 | `ui_wait` | 等待元素/时间 |
 | `ui_eval` | 执行 JavaScript |
 
+### 标签页管理 (Browser Only)
+
+| 工具 | 说明 |
+|------|------|
+| `ui_tab_list` | 列出所有打开的标签页 |
+| `ui_tab_create` | 创建新标签页 |
+| `ui_tab_close` | 关闭标签页 |
+| `ui_tab_activate` | 激活/聚焦指定标签页 |
+| `ui_tab_reload` | 重新加载标签页 |
+| `ui_tab_duplicate` | 复制标签页 |
+
+### 导航 (Browser Only)
+
+| 工具 | 说明 |
+|------|------|
+| `ui_go_back` | 浏览器后退 |
+| `ui_go_forward` | 浏览器前进 |
+| `ui_get_url` | 获取当前页面 URL |
+| `ui_get_title` | 获取当前页面标题 |
+
+### 存储与 Cookie (Browser Only)
+
+| 工具 | 说明 |
+|------|------|
+| `ui_storage_get` | 读取 localStorage/sessionStorage |
+| `ui_storage_set` | 写入 localStorage/sessionStorage |
+| `ui_storage_clear` | 清空 localStorage/sessionStorage |
+| `ui_cookie_get` | 获取指定 Cookie |
+| `ui_cookie_set` | 设置 Cookie |
+| `ui_cookie_delete` | 删除 Cookie |
+| `ui_cookie_get_all` | 获取所有 Cookie |
+
+### 表单操作 (Browser Only)
+
+| 工具 | 说明 |
+|------|------|
+| `ui_form_submit` | 提交表单 |
+| `ui_form_reset` | 重置表单 |
+| `ui_checkbox` | 设置复选框/单选框状态 |
+
+### 元素查询 (Browser Only)
+
+| 工具 | 说明 |
+|------|------|
+| `ui_query_selector` | 查询单个元素并返回信息 |
+| `ui_query_selector_all` | 查询所有匹配元素 |
+| `ui_get_element_info` | 获取元素详细信息 |
+| `ui_get_bounding_rect` | 获取元素位置和尺寸 |
+| `ui_is_visible` | 检查元素是否可见 |
+| `ui_is_enabled` | 检查元素是否启用 |
+| `ui_element_exists` | 检查元素是否存在 |
+| `ui_count_elements` | 统计匹配元素数量 |
+
+### 框架操作 (Browser Only)
+
+| 工具 | 说明 |
+|------|------|
+| `ui_get_frames` | 获取页面中所有 iframe/frame |
+
+### 文本操作 (Browser Only)
+
+| 工具 | 说明 |
+|------|------|
+| `ui_select_text` | 选择元素中的文本 |
+| `ui_copy_text` | 复制文本到剪贴板 |
+| `ui_get_text` | 获取元素文本内容 |
+
+### 媒体控制 (Browser Only)
+
+| 工具 | 说明 |
+|------|------|
+| `ui_media_play` | 播放视频/音频 |
+| `ui_media_pause` | 暂停视频/音频 |
+| `ui_media_set_volume` | 设置音量 (0-1) |
+| `ui_media_get_state` | 获取媒体播放状态 |
+
+### 坐标操作 (Browser Only)
+
+| 工具 | 说明 |
+|------|------|
+| `ui_click_at_position` | 在指定坐标点击 |
+| `ui_hover_at_position` | 在指定坐标悬停 |
+
+### 元素状态 (Browser Only)
+
+| 工具 | 说明 |
+|------|------|
+| `ui_scroll_into_view` | 滚动元素到可视区域 |
+| `ui_get_computed_style` | 获取计算后的 CSS 样式 |
+| `ui_get_scroll_position` | 获取滚动位置 |
+| `ui_set_scroll_position` | 设置滚动位置 |
+
+### 性能与调试 (Browser Only)
+
+| 工具 | 说明 |
+|------|------|
+| `ui_get_performance` | 获取页面性能指标 |
+| `ui_get_window_info` | 获取窗口信息 |
+| `ui_get_accessibility_tree` | 获取无障碍树 |
+
 ### 桌面端专属工具 (Desktop Only)
 
 这些工具只能在桌面 Executor (Windows/macOS/Linux) 上使用：
@@ -151,13 +251,18 @@ npm run build:server
 | 元素点击/输入 | ✅ CSS/XPath 选择器 | ✅ 坐标点击 | ✅ |
 | 截图 | ✅ | ✅ | ✅ |
 | 键盘输入 | ✅ | ✅ | ✅ |
+| 标签页管理 | ✅ | ❌ | ❌ |
 | 窗口管理 | ❌ | ✅ | ❌ |
-| 剪贴板 | ❌ | ✅ | ❌ |
+| Cookie/存储 | ✅ | ❌ | ❌ |
+| 剪贴板 | ✅ | ✅ | ❌ |
 | Shell 执行 | ❌ | ✅ | ❌ |
 | 文件操作 | ❌ | ✅ | ❌ |
 | 系统通知 | ❌ | ✅ | ✅ |
 | JavaScript 执行 | ✅ | ❌ | ❌ |
 | DOM 操作 | ✅ | ❌ | ❌ |
+| 媒体控制 | ✅ | ❌ | ❌ |
+| 性能监控 | ✅ | ❌ | ❌ |
+| 无障碍树 | ✅ | ❌ | ❌ |
 
 ### 选择器类型
 

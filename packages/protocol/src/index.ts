@@ -159,6 +159,303 @@ export interface GetAttributeParams {
 }
 
 // ============================================================
+// Browser-specific 扩展命令参数
+// ============================================================
+
+// Tab management
+export interface TabListParams {
+  windowId?: number;
+}
+
+export interface TabCreateParams {
+  url?: string;
+  active?: boolean;
+}
+
+export interface TabCloseParams {
+  tabId?: number;
+}
+
+export interface TabActivateParams {
+  tabId: number;
+}
+
+export interface TabReloadParams {
+  tabId?: number;
+  bypassCache?: boolean;
+}
+
+export interface TabDuplicateParams {
+  tabId?: number;
+}
+
+// Navigation
+export interface GoBackParams {}
+
+export interface GoForwardParams {}
+
+export interface GetUrlParams {}
+
+export interface GetTitleParams {}
+
+// Storage
+export interface StorageGetParams {
+  key: string;
+  storageType?: "local" | "session";
+}
+
+export interface StorageSetParams {
+  key: string;
+  value: string;
+  storageType?: "local" | "session";
+}
+
+export interface StorageClearParams {
+  storageType?: "local" | "session";
+}
+
+// Cookies
+export interface CookieGetParams {
+  name: string;
+  url?: string;
+}
+
+export interface CookieSetParams {
+  name: string;
+  value: string;
+  url?: string;
+  domain?: string;
+  path?: string;
+  secure?: boolean;
+  httpOnly?: boolean;
+  expirationDate?: number;
+  sameSite?: "no_restriction" | "lax" | "strict";
+}
+
+export interface CookieDeleteParams {
+  name: string;
+  url?: string;
+}
+
+export interface CookieGetAllParams {
+  url?: string;
+  domain?: string;
+}
+
+// Forms
+export interface FormSubmitParams {
+  selector: string;
+  selectorType?: SelectorType;
+}
+
+export interface FormResetParams {
+  selector: string;
+  selectorType?: SelectorType;
+}
+
+export interface CheckboxParams {
+  selector: string;
+  checked: boolean;
+  selectorType?: SelectorType;
+}
+
+export interface FileUploadParams {
+  selector: string;
+  files: Array<{ name: string; content: string; mimeType?: string }>;
+  selectorType?: SelectorType;
+}
+
+// Element queries
+export interface QuerySelectorParams {
+  selector: string;
+  selectorType?: SelectorType;
+}
+
+export interface QuerySelectorAllParams {
+  selector: string;
+  selectorType?: SelectorType;
+  limit?: number;
+}
+
+export interface GetElementInfoParams {
+  selector: string;
+  selectorType?: SelectorType;
+}
+
+export interface GetBoundingRectParams {
+  selector: string;
+  selectorType?: SelectorType;
+}
+
+export interface IsVisibleParams {
+  selector: string;
+  selectorType?: SelectorType;
+}
+
+export interface IsEnabledParams {
+  selector: string;
+  selectorType?: SelectorType;
+}
+
+export interface ElementExistsParams {
+  selector: string;
+  selectorType?: SelectorType;
+}
+
+export interface CountElementsParams {
+  selector: string;
+  selectorType?: SelectorType;
+}
+
+// Frame operations
+export interface SwitchToFrameParams {
+  selector?: string;
+  index?: number;
+  selectorType?: SelectorType;
+}
+
+export interface SwitchToMainParams {}
+
+export interface GetFramesParams {}
+
+// Screenshot extensions
+export interface ScreenshotFullPageParams {}
+
+export interface ScreenshotElementParams {
+  selector: string;
+  selectorType?: SelectorType;
+}
+
+// Text operations
+export interface SelectTextParams {
+  selector: string;
+  start?: number;
+  end?: number;
+  selectorType?: SelectorType;
+}
+
+export interface CopyTextParams {
+  selector?: string;
+  selectorType?: SelectorType;
+}
+
+export interface GetTextParams {
+  selector: string;
+  selectorType?: SelectorType;
+}
+
+// Media control
+export interface MediaPlayParams {
+  selector: string;
+  selectorType?: SelectorType;
+}
+
+export interface MediaPauseParams {
+  selector: string;
+  selectorType?: SelectorType;
+}
+
+export interface MediaSetVolumeParams {
+  selector: string;
+  volume: number;
+  selectorType?: SelectorType;
+}
+
+export interface MediaGetStateParams {
+  selector: string;
+  selectorType?: SelectorType;
+}
+
+// Position-based operations
+export interface ClickAtPositionParams {
+  x: number;
+  y: number;
+  button?: "left" | "right" | "middle";
+}
+
+export interface HoverAtPositionParams {
+  x: number;
+  y: number;
+}
+
+// Element state
+export interface ScrollIntoViewParams {
+  selector: string;
+  selectorType?: SelectorType;
+  behavior?: "auto" | "smooth";
+  block?: "start" | "center" | "end" | "nearest";
+}
+
+export interface GetComputedStyleParams {
+  selector: string;
+  property?: string;
+  selectorType?: SelectorType;
+}
+
+export interface GetScrollPositionParams {
+  selector?: string;
+  selectorType?: SelectorType;
+}
+
+export interface SetScrollPositionParams {
+  x: number;
+  y: number;
+  selector?: string;
+  selectorType?: SelectorType;
+  behavior?: "auto" | "smooth";
+}
+
+// Performance
+export interface GetPerformanceParams {}
+
+// PDF
+export interface PrintToPdfParams {}
+
+// Console logs
+export interface GetConsoleLogsParams {
+  level?: "log" | "warn" | "error" | "info" | "debug" | "all";
+  limit?: number;
+}
+
+export interface ClearConsoleLogsParams {}
+
+// Dialogs
+export interface HandleDialogParams {
+  action: "accept" | "dismiss";
+  promptText?: string;
+}
+
+// Downloads
+export interface GetDownloadsParams {
+  limit?: number;
+}
+
+// Window info
+export interface GetWindowInfoParams {}
+
+// Accessibility
+export interface GetAccessibilityTreeParams {
+  selector?: string;
+  selectorType?: SelectorType;
+}
+
+// Mutation observer
+export interface ObserveDOMParams {
+  selector: string;
+  selectorType?: SelectorType;
+  options?: {
+    childList?: boolean;
+    attributes?: boolean;
+    characterData?: boolean;
+    subtree?: boolean;
+  };
+}
+
+export interface StopObserveDOMParams {
+  observerId: string;
+}
+
+// ============================================================
 // Desktop-specific 命令参数
 // ============================================================
 
@@ -375,6 +672,7 @@ export interface DesktopNotifyParams extends ToolParams, NotifyParams {}
 // 平台能力定义
 // ============================================================
 export const BROWSER_CAPABILITIES = [
+  // Basic interaction
   "navigate",
   "click",
   "doubleClick",
@@ -393,6 +691,82 @@ export const BROWSER_CAPABILITIES = [
   "select",
   "focus",
   "blur",
+  // Tab management (background script)
+  "tabList",
+  "tabCreate",
+  "tabClose",
+  "tabActivate",
+  "tabReload",
+  "tabDuplicate",
+  // Navigation
+  "goBack",
+  "goForward",
+  "getUrl",
+  "getTitle",
+  // Storage & Cookies
+  "storageGet",
+  "storageSet",
+  "storageClear",
+  "cookieGet",
+  "cookieSet",
+  "cookieDelete",
+  "cookieGetAll",
+  // Forms
+  "formSubmit",
+  "formReset",
+  "checkbox",
+  "fileUpload",
+  // Element queries
+  "querySelector",
+  "querySelectorAll",
+  "getElementInfo",
+  "getBoundingRect",
+  "isVisible",
+  "isEnabled",
+  "elementExists",
+  "countElements",
+  // Frame operations
+  "switchToFrame",
+  "switchToMain",
+  "getFrames",
+  // Full page screenshot
+  "screenshotFullPage",
+  "screenshotElement",
+  // Text operations
+  "selectText",
+  "copyText",
+  "getText",
+  // Media control
+  "mediaPlay",
+  "mediaPause",
+  "mediaSetVolume",
+  "mediaGetState",
+  // Position-based operations
+  "clickAtPosition",
+  "hoverAtPosition",
+  // Element state
+  "scrollIntoView",
+  "getComputedStyle",
+  "getScrollPosition",
+  "setScrollPosition",
+  // Network/Performance
+  "getPerformance",
+  // PDF
+  "printToPdf",
+  // Console/Logs
+  "getConsoleLogs",
+  "clearConsoleLogs",
+  // Dialogs
+  "handleDialog",
+  // Downloads
+  "getDownloads",
+  // Window info
+  "getWindowInfo",
+  // Accessibility
+  "getAccessibilityTree",
+  // Mutation observer
+  "observeDOM",
+  "stopObserveDOM",
 ] as const;
 
 export const DESKTOP_CAPABILITIES = [

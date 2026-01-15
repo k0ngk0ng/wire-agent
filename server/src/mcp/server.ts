@@ -478,6 +478,733 @@ const tools = [
     },
   },
   // ============================================================
+  // Browser-specific extended tools
+  // ============================================================
+  // Tab Management
+  {
+    name: "ui_tab_list",
+    description: "List all open browser tabs",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        windowId: { type: "number", description: "Filter by window ID (optional)" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "ui_tab_create",
+    description: "Create a new browser tab",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        url: { type: "string", description: "URL to open (default: about:blank)" },
+        active: { type: "boolean", description: "Make the new tab active (default: true)" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "ui_tab_close",
+    description: "Close a browser tab",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        tabId: { type: "number", description: "Tab ID to close (uses current if not specified)" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "ui_tab_activate",
+    description: "Activate/focus a specific tab",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        tabId: { type: "number", description: "Tab ID to activate" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["tabId"],
+    },
+  },
+  {
+    name: "ui_tab_reload",
+    description: "Reload a browser tab",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        tabId: { type: "number", description: "Tab ID to reload (uses current if not specified)" },
+        bypassCache: { type: "boolean", description: "Bypass cache (default: false)" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "ui_tab_duplicate",
+    description: "Duplicate a browser tab",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        tabId: { type: "number", description: "Tab ID to duplicate (uses current if not specified)" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  // Navigation
+  {
+    name: "ui_go_back",
+    description: "Navigate back in browser history",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "ui_go_forward",
+    description: "Navigate forward in browser history",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "ui_get_url",
+    description: "Get the current page URL",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "ui_get_title",
+    description: "Get the current page title",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  // Storage
+  {
+    name: "ui_storage_get",
+    description: "Get a value from localStorage or sessionStorage",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        key: { type: "string", description: "Storage key" },
+        storageType: {
+          type: "string",
+          enum: ["local", "session"],
+          description: "Storage type (default: local)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["key"],
+    },
+  },
+  {
+    name: "ui_storage_set",
+    description: "Set a value in localStorage or sessionStorage",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        key: { type: "string", description: "Storage key" },
+        value: { type: "string", description: "Value to store" },
+        storageType: {
+          type: "string",
+          enum: ["local", "session"],
+          description: "Storage type (default: local)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["key", "value"],
+    },
+  },
+  {
+    name: "ui_storage_clear",
+    description: "Clear localStorage or sessionStorage",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        storageType: {
+          type: "string",
+          enum: ["local", "session"],
+          description: "Storage type (default: local)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  // Cookies
+  {
+    name: "ui_cookie_get",
+    description: "Get a specific cookie by name",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        name: { type: "string", description: "Cookie name" },
+        url: { type: "string", description: "URL context (uses current page if not specified)" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "ui_cookie_set",
+    description: "Set a cookie",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        name: { type: "string", description: "Cookie name" },
+        value: { type: "string", description: "Cookie value" },
+        url: { type: "string", description: "URL context" },
+        domain: { type: "string", description: "Cookie domain" },
+        path: { type: "string", description: "Cookie path" },
+        secure: { type: "boolean", description: "Secure cookie" },
+        httpOnly: { type: "boolean", description: "HTTP only cookie" },
+        expirationDate: { type: "number", description: "Expiration timestamp" },
+        sameSite: {
+          type: "string",
+          enum: ["no_restriction", "lax", "strict"],
+          description: "SameSite attribute",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["name", "value"],
+    },
+  },
+  {
+    name: "ui_cookie_delete",
+    description: "Delete a cookie",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        name: { type: "string", description: "Cookie name" },
+        url: { type: "string", description: "URL context (uses current page if not specified)" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "ui_cookie_get_all",
+    description: "Get all cookies for a URL or domain",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        url: { type: "string", description: "URL to get cookies for" },
+        domain: { type: "string", description: "Domain to get cookies for" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  // Forms
+  {
+    name: "ui_form_submit",
+    description: "Submit a form",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Form selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  {
+    name: "ui_form_reset",
+    description: "Reset a form to its initial values",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Form selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  {
+    name: "ui_checkbox",
+    description: "Set checkbox or radio button state",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Checkbox/radio selector" },
+        checked: { type: "boolean", description: "Checked state" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector", "checked"],
+    },
+  },
+  // Element queries
+  {
+    name: "ui_query_selector",
+    description: "Find a single element and return basic info",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Element selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  {
+    name: "ui_query_selector_all",
+    description: "Find all matching elements and return their info",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Element selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        limit: { type: "number", description: "Maximum number of elements to return (default: 100)" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  {
+    name: "ui_get_element_info",
+    description: "Get detailed information about an element",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Element selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  {
+    name: "ui_get_bounding_rect",
+    description: "Get element bounding rectangle (position and size)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Element selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  {
+    name: "ui_is_visible",
+    description: "Check if an element is visible",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Element selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  {
+    name: "ui_is_enabled",
+    description: "Check if an element is enabled (not disabled)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Element selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  {
+    name: "ui_element_exists",
+    description: "Check if an element exists in the DOM",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Element selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  {
+    name: "ui_count_elements",
+    description: "Count matching elements",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Element selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  // Frame operations
+  {
+    name: "ui_get_frames",
+    description: "Get all iframes/frames on the page",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  // Text operations
+  {
+    name: "ui_select_text",
+    description: "Select text within an element",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Element selector" },
+        start: { type: "number", description: "Start position (optional)" },
+        end: { type: "number", description: "End position (optional)" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  {
+    name: "ui_copy_text",
+    description: "Copy text to clipboard (from element or selection)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Element to copy from (copies selection if not specified)" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "ui_get_text",
+    description: "Get text content of an element",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Element selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  // Media control
+  {
+    name: "ui_media_play",
+    description: "Play a video or audio element",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Media element selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  {
+    name: "ui_media_pause",
+    description: "Pause a video or audio element",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Media element selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  {
+    name: "ui_media_set_volume",
+    description: "Set volume of a media element (0-1)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Media element selector" },
+        volume: { type: "number", description: "Volume level (0-1)" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector", "volume"],
+    },
+  },
+  {
+    name: "ui_media_get_state",
+    description: "Get current state of a media element",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Media element selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  // Position-based operations
+  {
+    name: "ui_click_at_position",
+    description: "Click at specific x,y coordinates on the page",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        x: { type: "number", description: "X coordinate" },
+        y: { type: "number", description: "Y coordinate" },
+        button: {
+          type: "string",
+          enum: ["left", "right", "middle"],
+          description: "Mouse button (default: left)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["x", "y"],
+    },
+  },
+  {
+    name: "ui_hover_at_position",
+    description: "Hover at specific x,y coordinates on the page",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        x: { type: "number", description: "X coordinate" },
+        y: { type: "number", description: "Y coordinate" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["x", "y"],
+    },
+  },
+  // Element state
+  {
+    name: "ui_scroll_into_view",
+    description: "Scroll an element into the visible area",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Element selector" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        behavior: {
+          type: "string",
+          enum: ["auto", "smooth"],
+          description: "Scroll behavior (default: smooth)",
+        },
+        block: {
+          type: "string",
+          enum: ["start", "center", "end", "nearest"],
+          description: "Vertical alignment (default: center)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  {
+    name: "ui_get_computed_style",
+    description: "Get computed CSS styles of an element",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Element selector" },
+        property: { type: "string", description: "Specific CSS property (returns common styles if not specified)" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["selector"],
+    },
+  },
+  {
+    name: "ui_get_scroll_position",
+    description: "Get scroll position of page or element",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Element selector (page scroll if not specified)" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "ui_set_scroll_position",
+    description: "Set scroll position of page or element",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        x: { type: "number", description: "Horizontal scroll position" },
+        y: { type: "number", description: "Vertical scroll position" },
+        selector: { type: "string", description: "Element selector (page scroll if not specified)" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        behavior: {
+          type: "string",
+          enum: ["auto", "smooth"],
+          description: "Scroll behavior (default: auto)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["x", "y"],
+    },
+  },
+  // Performance
+  {
+    name: "ui_get_performance",
+    description: "Get page performance metrics",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  // Window info
+  {
+    name: "ui_get_window_info",
+    description: "Get browser window information",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  // Accessibility
+  {
+    name: "ui_get_accessibility_tree",
+    description: "Get accessibility tree of the page or an element",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        selector: { type: "string", description: "Root element (whole page if not specified)" },
+        selectorType: {
+          type: "string",
+          enum: ["css", "xpath", "accessibility", "text"],
+          description: "Type of selector (default: css)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  // ============================================================
   // Desktop-specific tools
   // ============================================================
   {
@@ -1161,6 +1888,624 @@ async function handleToolCall(name: string, args: Record<string, unknown>) {
             text: result.success
               ? `Blurred: ${selector}`
               : `Failed to blur: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // ============================================================
+    // Browser-specific extended tool handlers
+    // ============================================================
+
+    // Tab Management
+    case "ui_tab_list": {
+      const { windowId, executorId } = args as { windowId?: number; executorId?: string };
+      const result = await executorManager.execute("tabList", { windowId }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? JSON.stringify(result.data, null, 2)
+              : `Failed to list tabs: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_tab_create": {
+      const { url, active, executorId } = args as { url?: string; active?: boolean; executorId?: string };
+      const result = await executorManager.execute("tabCreate", { url, active }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? `Created tab: ${JSON.stringify(result.data)}`
+              : `Failed to create tab: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_tab_close": {
+      const { tabId, executorId } = args as { tabId?: number; executorId?: string };
+      const result = await executorManager.execute("tabClose", { tabId }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? "Tab closed" : `Failed to close tab: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_tab_activate": {
+      const { tabId, executorId } = args as { tabId: number; executorId?: string };
+      const result = await executorManager.execute("tabActivate", { tabId }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Activated tab ${tabId}` : `Failed to activate tab: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_tab_reload": {
+      const { tabId, bypassCache, executorId } = args as { tabId?: number; bypassCache?: boolean; executorId?: string };
+      const result = await executorManager.execute("tabReload", { tabId, bypassCache }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? "Tab reloaded" : `Failed to reload tab: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_tab_duplicate": {
+      const { tabId, executorId } = args as { tabId?: number; executorId?: string };
+      const result = await executorManager.execute("tabDuplicate", { tabId }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? `Duplicated tab: ${JSON.stringify(result.data)}`
+              : `Failed to duplicate tab: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // Navigation
+    case "ui_go_back": {
+      const { executorId } = args as { executorId?: string };
+      const result = await executorManager.execute("goBack", {}, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? "Navigated back" : `Failed to go back: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_go_forward": {
+      const { executorId } = args as { executorId?: string };
+      const result = await executorManager.execute("goForward", {}, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? "Navigated forward" : `Failed to go forward: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_get_url": {
+      const { executorId } = args as { executorId?: string };
+      const result = await executorManager.execute("getUrl", {}, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? String(result.data) : `Failed to get URL: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_get_title": {
+      const { executorId } = args as { executorId?: string };
+      const result = await executorManager.execute("getTitle", {}, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? String(result.data) : `Failed to get title: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // Storage
+    case "ui_storage_get": {
+      const { key, storageType, executorId } = args as { key: string; storageType?: string; executorId?: string };
+      const result = await executorManager.execute("storageGet", { key, storageType }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? result.data !== null ? String(result.data) : "(null)"
+              : `Failed to get storage: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_storage_set": {
+      const { key, value, storageType, executorId } = args as { key: string; value: string; storageType?: string; executorId?: string };
+      const result = await executorManager.execute("storageSet", { key, value, storageType }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Set ${key} in ${storageType || "local"}Storage` : `Failed to set storage: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_storage_clear": {
+      const { storageType, executorId } = args as { storageType?: string; executorId?: string };
+      const result = await executorManager.execute("storageClear", { storageType }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Cleared ${storageType || "local"}Storage` : `Failed to clear storage: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // Cookies
+    case "ui_cookie_get": {
+      const { name, url, executorId } = args as { name: string; url?: string; executorId?: string };
+      const result = await executorManager.execute("cookieGet", { name, url }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? JSON.stringify(result.data, null, 2) : `Failed to get cookie: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_cookie_set": {
+      const { name, value, url, domain, path, secure, httpOnly, expirationDate, sameSite, executorId } = args as {
+        name: string; value: string; url?: string; domain?: string; path?: string;
+        secure?: boolean; httpOnly?: boolean; expirationDate?: number; sameSite?: string; executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "cookieSet",
+        { name, value, url, domain, path, secure, httpOnly, expirationDate, sameSite },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Set cookie: ${name}` : `Failed to set cookie: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_cookie_delete": {
+      const { name, url, executorId } = args as { name: string; url?: string; executorId?: string };
+      const result = await executorManager.execute("cookieDelete", { name, url }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Deleted cookie: ${name}` : `Failed to delete cookie: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_cookie_get_all": {
+      const { url, domain, executorId } = args as { url?: string; domain?: string; executorId?: string };
+      const result = await executorManager.execute("cookieGetAll", { url, domain }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? JSON.stringify(result.data, null, 2) : `Failed to get cookies: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // Forms
+    case "ui_form_submit": {
+      const { selector, selectorType, executorId } = args as { selector: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("formSubmit", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Submitted form: ${selector}` : `Failed to submit form: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_form_reset": {
+      const { selector, selectorType, executorId } = args as { selector: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("formReset", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Reset form: ${selector}` : `Failed to reset form: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_checkbox": {
+      const { selector, checked, selectorType, executorId } = args as { selector: string; checked: boolean; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("checkbox", { selector, checked, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Set checkbox ${selector} to ${checked}` : `Failed to set checkbox: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // Element queries
+    case "ui_query_selector": {
+      const { selector, selectorType, executorId } = args as { selector: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("querySelector", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? JSON.stringify(result.data, null, 2) : `Failed to query: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_query_selector_all": {
+      const { selector, selectorType, limit, executorId } = args as { selector: string; selectorType?: string; limit?: number; executorId?: string };
+      const result = await executorManager.execute("querySelectorAll", { selector, selectorType: selectorType || "css", limit }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? JSON.stringify(result.data, null, 2) : `Failed to query: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_get_element_info": {
+      const { selector, selectorType, executorId } = args as { selector: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("getElementInfo", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? JSON.stringify(result.data, null, 2) : `Failed to get element info: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_get_bounding_rect": {
+      const { selector, selectorType, executorId } = args as { selector: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("getBoundingRect", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? JSON.stringify(result.data, null, 2) : `Failed to get bounding rect: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_is_visible": {
+      const { selector, selectorType, executorId } = args as { selector: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("isVisible", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `visible: ${result.data}` : `Failed to check visibility: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_is_enabled": {
+      const { selector, selectorType, executorId } = args as { selector: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("isEnabled", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `enabled: ${result.data}` : `Failed to check enabled: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_element_exists": {
+      const { selector, selectorType, executorId } = args as { selector: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("elementExists", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `exists: ${result.data}` : `Failed to check existence: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_count_elements": {
+      const { selector, selectorType, executorId } = args as { selector: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("countElements", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `count: ${result.data}` : `Failed to count elements: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // Frame operations
+    case "ui_get_frames": {
+      const { executorId } = args as { executorId?: string };
+      const result = await executorManager.execute("getFrames", {}, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? JSON.stringify(result.data, null, 2) : `Failed to get frames: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // Text operations
+    case "ui_select_text": {
+      const { selector, start, end, selectorType, executorId } = args as { selector: string; start?: number; end?: number; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("selectText", { selector, start, end, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Selected text in: ${selector}` : `Failed to select text: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_copy_text": {
+      const { selector, selectorType, executorId } = args as { selector?: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("copyText", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Copied: ${result.data}` : `Failed to copy text: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_get_text": {
+      const { selector, selectorType, executorId } = args as { selector: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("getText", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? String(result.data) : `Failed to get text: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // Media control
+    case "ui_media_play": {
+      const { selector, selectorType, executorId } = args as { selector: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("mediaPlay", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Playing: ${selector}` : `Failed to play: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_media_pause": {
+      const { selector, selectorType, executorId } = args as { selector: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("mediaPause", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Paused: ${selector}` : `Failed to pause: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_media_set_volume": {
+      const { selector, volume, selectorType, executorId } = args as { selector: string; volume: number; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("mediaSetVolume", { selector, volume, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Set volume to ${volume}` : `Failed to set volume: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_media_get_state": {
+      const { selector, selectorType, executorId } = args as { selector: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("mediaGetState", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? JSON.stringify(result.data, null, 2) : `Failed to get media state: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // Position-based operations
+    case "ui_click_at_position": {
+      const { x, y, button, executorId } = args as { x: number; y: number; button?: string; executorId?: string };
+      const result = await executorManager.execute("clickAtPosition", { x, y, button: button || "left" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Clicked at (${x}, ${y})` : `Failed to click: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_hover_at_position": {
+      const { x, y, executorId } = args as { x: number; y: number; executorId?: string };
+      const result = await executorManager.execute("hoverAtPosition", { x, y }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Hovered at (${x}, ${y})` : `Failed to hover: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // Element state
+    case "ui_scroll_into_view": {
+      const { selector, selectorType, behavior, block, executorId } = args as { selector: string; selectorType?: string; behavior?: string; block?: string; executorId?: string };
+      const result = await executorManager.execute("scrollIntoView", { selector, selectorType: selectorType || "css", behavior, block }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Scrolled into view: ${selector}` : `Failed to scroll: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_get_computed_style": {
+      const { selector, property, selectorType, executorId } = args as { selector: string; property?: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("getComputedStyle", { selector, property, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? JSON.stringify(result.data, null, 2) : `Failed to get style: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_get_scroll_position": {
+      const { selector, selectorType, executorId } = args as { selector?: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("getScrollPosition", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? JSON.stringify(result.data, null, 2) : `Failed to get scroll position: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "ui_set_scroll_position": {
+      const { x, y, selector, selectorType, behavior, executorId } = args as { x: number; y: number; selector?: string; selectorType?: string; behavior?: string; executorId?: string };
+      const result = await executorManager.execute("setScrollPosition", { x, y, selector, selectorType: selectorType || "css", behavior }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? `Scrolled to (${x}, ${y})` : `Failed to set scroll position: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // Performance
+    case "ui_get_performance": {
+      const { executorId } = args as { executorId?: string };
+      const result = await executorManager.execute("getPerformance", {}, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? JSON.stringify(result.data, null, 2) : `Failed to get performance: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // Window info
+    case "ui_get_window_info": {
+      const { executorId } = args as { executorId?: string };
+      const result = await executorManager.execute("getWindowInfo", {}, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? JSON.stringify(result.data, null, 2) : `Failed to get window info: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // Accessibility
+    case "ui_get_accessibility_tree": {
+      const { selector, selectorType, executorId } = args as { selector?: string; selectorType?: string; executorId?: string };
+      const result = await executorManager.execute("getAccessibilityTree", { selector, selectorType: selectorType || "css" }, executorId);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success ? JSON.stringify(result.data, null, 2) : `Failed to get accessibility tree: ${result.error}`,
           },
         ],
       };

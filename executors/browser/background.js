@@ -93,6 +93,7 @@ function registerTab(tab) {
     executorId: getExecutorId(tab.id),
     platform: "browser",
     capabilities: [
+      // Basic interaction
       "navigate",
       "click",
       "doubleClick",
@@ -111,6 +112,64 @@ function registerTab(tab) {
       "select",
       "focus",
       "blur",
+      // Tab management
+      "tabList",
+      "tabCreate",
+      "tabClose",
+      "tabActivate",
+      "tabReload",
+      "tabDuplicate",
+      // Navigation
+      "goBack",
+      "goForward",
+      "getUrl",
+      "getTitle",
+      // Storage & Cookies
+      "storageGet",
+      "storageSet",
+      "storageClear",
+      "cookieGet",
+      "cookieSet",
+      "cookieDelete",
+      "cookieGetAll",
+      // Forms
+      "formSubmit",
+      "formReset",
+      "checkbox",
+      // Element queries
+      "querySelector",
+      "querySelectorAll",
+      "getElementInfo",
+      "getBoundingRect",
+      "isVisible",
+      "isEnabled",
+      "elementExists",
+      "countElements",
+      // Frame operations
+      "getFrames",
+      // Text operations
+      "selectText",
+      "copyText",
+      "getText",
+      // Media control
+      "mediaPlay",
+      "mediaPause",
+      "mediaSetVolume",
+      "mediaGetState",
+      // Position-based operations
+      "clickAtPosition",
+      "hoverAtPosition",
+      // Element state
+      "scrollIntoView",
+      "getComputedStyle",
+      "getScrollPosition",
+      "setScrollPosition",
+      // Performance
+      "getPerformance",
+      // Window info
+      "getWindowInfo",
+      // Accessibility
+      "getAccessibilityTree",
     ],
     meta: {
       url: tab.url,
@@ -163,24 +222,158 @@ async function executeCommand(command) {
       }
     }
 
+    // ============================================================
+    // Tab Management Actions (Chrome API - no content script needed)
+    // ============================================================
+
+    if (action === "tabList") {
+      const tabs = await chrome.tabs.query(params.windowId ? { windowId: params.windowId } : {});
+      const data = tabs.map((tab) => ({
+        id: tab.id,
+        windowId: tab.windowId,
+        url: tab.url,
+        title: tab.title,
+        active: tab.active,
+        pinned: tab.pinned,
+        index: tab.index,
+      }));
+      return { type: "result", id, success: true, data };
+    }
+
+    if (action === "tabCreate") {
+      const newTab = await chrome.tabs.create({
+        url: params.url || "about:blank",
+        active: params.active !== false,
+      });
+      return { type: "result", id, success: true, data: { tabId: newTab.id, url: newTab.url } };
+    }
+
+    if (action === "tabClose") {
+      const targetTabId = params.tabId || tabId;
+      if (!targetTabId) {
+        return { type: "result", id, success: false, error: "No tab specified" };
+      }
+      await chrome.tabs.remove(targetTabId);
+      return { type: "result", id, success: true };
+    }
+
+    if (action === "tabActivate") {
+      await chrome.tabs.update(params.tabId, { active: true });
+      return { type: "result", id, success: true };
+    }
+
+    if (action === "tabReload") {
+      const targetTabId = params.tabId || tabId;
+      if (!targetTabId) {
+        return { type: "result", id, success: false, error: "No tab specified" };
+      }
+      await chrome.tabs.reload(targetTabId, { bypassCache: params.bypassCache || false });
+      return { type: "result", id, success: true };
+    }
+
+    if (action === "tabDuplicate") {
+      const targetTabId = params.tabId || tabId;
+      if (!targetTabId) {
+        return { type: "result", id, success: false, error: "No tab specified" };
+      }
+      const newTab = await chrome.tabs.duplicate(targetTabId);
+      return { type: "result", id, success: true, data: { tabId: newTab.id } };
+    }
+
+    // ============================================================
+    // Navigation Actions (Chrome API)
+    // ============================================================
+
     if (!tabId) {
       return { type: "result", id, success: false, error: "No active tab" };
     }
 
-    // Handle navigate separately (doesn't need content script)
     if (action === "navigate") {
       await chrome.tabs.update(tabId, { url: params.url });
       return { type: "result", id, success: true };
     }
 
-    // Handle screenshot separately
+    if (action === "goBack") {
+      await chrome.tabs.goBack(tabId);
+      return { type: "result", id, success: true };
+    }
+
+    if (action === "goForward") {
+      await chrome.tabs.goForward(tabId);
+      return { type: "result", id, success: true };
+    }
+
+    if (action === "getUrl") {
+      const tab = await chrome.tabs.get(tabId);
+      return { type: "result", id, success: true, data: tab.url };
+    }
+
+    if (action === "getTitle") {
+      const tab = await chrome.tabs.get(tabId);
+      return { type: "result", id, success: true, data: tab.title };
+    }
+
+    // ============================================================
+    // Screenshot Actions (Chrome API)
+    // ============================================================
+
     if (action === "screenshot") {
       const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "png" });
       const base64 = dataUrl.replace(/^data:image\/png;base64,/, "");
       return { type: "result", id, success: true, data: base64 };
     }
 
-    // Send to content script for DOM operations
+    // ============================================================
+    // Cookie Actions (Chrome API)
+    // ============================================================
+
+    if (action === "cookieGet") {
+      const tab = await chrome.tabs.get(tabId);
+      const url = params.url || tab.url;
+      const cookie = await chrome.cookies.get({ url, name: params.name });
+      return { type: "result", id, success: true, data: cookie };
+    }
+
+    if (action === "cookieSet") {
+      const tab = await chrome.tabs.get(tabId);
+      const url = params.url || tab.url;
+      const cookieDetails = {
+        url,
+        name: params.name,
+        value: params.value,
+      };
+      if (params.domain) cookieDetails.domain = params.domain;
+      if (params.path) cookieDetails.path = params.path;
+      if (params.secure !== undefined) cookieDetails.secure = params.secure;
+      if (params.httpOnly !== undefined) cookieDetails.httpOnly = params.httpOnly;
+      if (params.expirationDate) cookieDetails.expirationDate = params.expirationDate;
+      if (params.sameSite) cookieDetails.sameSite = params.sameSite;
+
+      await chrome.cookies.set(cookieDetails);
+      return { type: "result", id, success: true };
+    }
+
+    if (action === "cookieDelete") {
+      const tab = await chrome.tabs.get(tabId);
+      const url = params.url || tab.url;
+      await chrome.cookies.remove({ url, name: params.name });
+      return { type: "result", id, success: true };
+    }
+
+    if (action === "cookieGetAll") {
+      const tab = await chrome.tabs.get(tabId);
+      const url = params.url || tab.url;
+      const details = {};
+      if (url) details.url = url;
+      if (params.domain) details.domain = params.domain;
+      const cookies = await chrome.cookies.getAll(details);
+      return { type: "result", id, success: true, data: cookies };
+    }
+
+    // ============================================================
+    // Content Script Actions (forward to content script)
+    // ============================================================
+
     const response = await chrome.tabs.sendMessage(tabId, {
       type: "EXECUTE_ACTION",
       action,
