@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "wire-agent": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "cwd": "<path-to-wire-agent>/server"
+    }
+  }
+}

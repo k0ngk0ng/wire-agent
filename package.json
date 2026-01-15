@@ -1,0 +1,17 @@
+{
+  "name": "wire-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Universal UI automation agent with MCP integration",
+  "workspaces": [
+    "packages/*",
+    "server",
+    "executors/*"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev -w server",
+    "build": "npm run build -w packages/protocol && npm run build -w server",
+    "build:server": "npm run build -w server",
+    "build:protocol": "npm run build -w packages/protocol"
+  }
+}
