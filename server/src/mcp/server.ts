@@ -477,6 +477,226 @@ const tools = [
       required: ["selector"],
     },
   },
+  // ============================================================
+  // Desktop-specific tools
+  // ============================================================
+  {
+    name: "desktop_mouse_click",
+    description: "Click at specific screen coordinates (desktop only)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        x: { type: "number", description: "X coordinate" },
+        y: { type: "number", description: "Y coordinate" },
+        button: {
+          type: "string",
+          enum: ["left", "right", "middle"],
+          description: "Mouse button (default: left)",
+        },
+        clicks: { type: "number", description: "Number of clicks (1 = single, 2 = double)" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["x", "y"],
+    },
+  },
+  {
+    name: "desktop_mouse_move",
+    description: "Move mouse to specific screen coordinates (desktop only)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        x: { type: "number", description: "X coordinate" },
+        y: { type: "number", description: "Y coordinate" },
+        duration: { type: "number", description: "Animation duration in ms" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["x", "y"],
+    },
+  },
+  {
+    name: "desktop_mouse_drag",
+    description: "Drag mouse from one position to another (desktop only)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        startX: { type: "number", description: "Start X coordinate" },
+        startY: { type: "number", description: "Start Y coordinate" },
+        endX: { type: "number", description: "End X coordinate" },
+        endY: { type: "number", description: "End Y coordinate" },
+        duration: { type: "number", description: "Drag duration in ms" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["startX", "startY", "endX", "endY"],
+    },
+  },
+  {
+    name: "desktop_window_list",
+    description: "List all open windows (desktop only)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        includeMinimized: { type: "boolean", description: "Include minimized windows" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "desktop_window_focus",
+    description: "Focus/activate a window by title or process name (desktop only)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        title: { type: "string", description: "Window title (partial match)" },
+        processName: { type: "string", description: "Process name" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "desktop_window_state",
+    description: "Change window state (minimize, maximize, restore, close)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        title: { type: "string", description: "Window title" },
+        processName: { type: "string", description: "Process name" },
+        state: {
+          type: "string",
+          enum: ["minimize", "maximize", "restore", "close"],
+          description: "New window state",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["state"],
+    },
+  },
+  {
+    name: "desktop_clipboard_read",
+    description: "Read text from system clipboard (desktop only)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        format: {
+          type: "string",
+          enum: ["text", "html", "image"],
+          description: "Clipboard format (default: text)",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "desktop_clipboard_write",
+    description: "Write text to system clipboard (desktop only)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        text: { type: "string", description: "Text to write to clipboard" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["text"],
+    },
+  },
+  {
+    name: "desktop_shell_exec",
+    description: "Execute a shell command (desktop only)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        command: { type: "string", description: "Command to execute" },
+        cwd: { type: "string", description: "Working directory" },
+        timeout: { type: "number", description: "Timeout in ms (default: 30000)" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["command"],
+    },
+  },
+  {
+    name: "desktop_app_launch",
+    description: "Launch an application (desktop only)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        path: { type: "string", description: "Path to application or executable" },
+        args: {
+          type: "array",
+          items: { type: "string" },
+          description: "Command line arguments",
+        },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["path"],
+    },
+  },
+  {
+    name: "desktop_app_close",
+    description: "Close an application by process name or PID (desktop only)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        processName: { type: "string", description: "Process name to close" },
+        pid: { type: "number", description: "Process ID to close" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "desktop_file_read",
+    description: "Read file contents (desktop only)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        path: { type: "string", description: "File path" },
+        encoding: { type: "string", description: "File encoding (default: utf8)" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["path"],
+    },
+  },
+  {
+    name: "desktop_file_write",
+    description: "Write content to a file (desktop only)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        path: { type: "string", description: "File path" },
+        content: { type: "string", description: "Content to write" },
+        encoding: { type: "string", description: "File encoding (default: utf8)" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["path", "content"],
+    },
+  },
+  {
+    name: "desktop_file_exists",
+    description: "Check if a file exists (desktop only)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        path: { type: "string", description: "File path to check" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["path"],
+    },
+  },
+  {
+    name: "desktop_notify",
+    description: "Show a desktop notification (desktop only)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        title: { type: "string", description: "Notification title" },
+        message: { type: "string", description: "Notification message" },
+        icon: { type: "string", description: "Icon path (optional)" },
+        executorId: { type: "string", description: "Target executor ID (optional)" },
+      },
+      required: ["title", "message"],
+    },
+  },
 ];
 
 // Tool handlers
@@ -941,6 +1161,369 @@ async function handleToolCall(name: string, args: Record<string, unknown>) {
             text: result.success
               ? `Blurred: ${selector}`
               : `Failed to blur: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    // ============================================================
+    // Desktop-specific tool handlers
+    // ============================================================
+    case "desktop_mouse_click": {
+      const { x, y, button, clicks, executorId } = args as {
+        x: number;
+        y: number;
+        button?: string;
+        clicks?: number;
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "mouseClick",
+        { x, y, button: button || "left", clicks: clicks || 1 },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? `Clicked at (${x}, ${y})`
+              : `Failed to click: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "desktop_mouse_move": {
+      const { x, y, duration, executorId } = args as {
+        x: number;
+        y: number;
+        duration?: number;
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "mouseMove",
+        { x, y, duration: duration || 0 },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? `Moved mouse to (${x}, ${y})`
+              : `Failed to move: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "desktop_mouse_drag": {
+      const { startX, startY, endX, endY, duration, executorId } = args as {
+        startX: number;
+        startY: number;
+        endX: number;
+        endY: number;
+        duration?: number;
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "mouseDrag",
+        { startX, startY, endX, endY, duration: duration || 500 },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? `Dragged from (${startX}, ${startY}) to (${endX}, ${endY})`
+              : `Failed to drag: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "desktop_window_list": {
+      const { includeMinimized, executorId } = args as {
+        includeMinimized?: boolean;
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "windowList",
+        { includeMinimized: includeMinimized || false },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? JSON.stringify(result.data, null, 2)
+              : `Failed to list windows: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "desktop_window_focus": {
+      const { title, processName, executorId } = args as {
+        title?: string;
+        processName?: string;
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "windowFocus",
+        { title, processName },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? `Focused window: ${title || processName}`
+              : `Failed to focus: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "desktop_window_state": {
+      const { title, processName, state, executorId } = args as {
+        title?: string;
+        processName?: string;
+        state: string;
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "windowState",
+        { title, processName, state },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? `Window state changed to: ${state}`
+              : `Failed to change state: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "desktop_clipboard_read": {
+      const { format, executorId } = args as {
+        format?: string;
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "clipboardRead",
+        { format: format || "text" },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? String(result.data)
+              : `Failed to read clipboard: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "desktop_clipboard_write": {
+      const { text, executorId } = args as {
+        text: string;
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "clipboardWrite",
+        { text },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? "Copied to clipboard"
+              : `Failed to write clipboard: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "desktop_shell_exec": {
+      const { command, cwd, timeout, executorId } = args as {
+        command: string;
+        cwd?: string;
+        timeout?: number;
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "shellExec",
+        { command, cwd, timeout: timeout || 30000 },
+        executorId
+      );
+      if (result.success) {
+        const data = result.data as { stdout: string; stderr: string };
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: data.stdout || data.stderr || "(no output)",
+            },
+          ],
+        };
+      }
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Command failed: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "desktop_app_launch": {
+      const { path, args: appArgs, executorId } = args as {
+        path: string;
+        args?: string[];
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "appLaunch",
+        { path, args: appArgs || [] },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? `Launched: ${path}`
+              : `Failed to launch: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "desktop_app_close": {
+      const { processName, pid, executorId } = args as {
+        processName?: string;
+        pid?: number;
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "appClose",
+        { processName, pid },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? `Closed: ${processName || pid}`
+              : `Failed to close: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "desktop_file_read": {
+      const { path, encoding, executorId } = args as {
+        path: string;
+        encoding?: string;
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "fileRead",
+        { path, encoding: encoding || "utf8" },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? String(result.data)
+              : `Failed to read file: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "desktop_file_write": {
+      const { path, content, encoding, executorId } = args as {
+        path: string;
+        content: string;
+        encoding?: string;
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "fileWrite",
+        { path, content, encoding: encoding || "utf8" },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? `Written to: ${path}`
+              : `Failed to write file: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "desktop_file_exists": {
+      const { path, executorId } = args as {
+        path: string;
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "fileExists",
+        { path },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? `File exists: ${result.data}`
+              : `Failed to check file: ${result.error}`,
+          },
+        ],
+      };
+    }
+
+    case "desktop_notify": {
+      const { title, message, icon, executorId } = args as {
+        title: string;
+        message: string;
+        icon?: string;
+        executorId?: string;
+      };
+      const result = await executorManager.execute(
+        "notify",
+        { title, message, icon },
+        executorId
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: result.success
+              ? "Notification sent"
+              : `Failed to notify: ${result.error}`,
           },
         ],
       };

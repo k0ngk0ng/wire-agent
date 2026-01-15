@@ -5,8 +5,14 @@
 // Executor 平台类型
 export type Platform = "browser" | "mobile" | "desktop";
 
-// 选择器类型
+// 桌面操作系统类型
+export type DesktopOS = "windows" | "macos" | "linux";
+
+// 选择器类型 (浏览器)
 export type SelectorType = "css" | "xpath" | "accessibility" | "text";
+
+// 桌面端选择器类型
+export type DesktopSelectorType = "window-title" | "window-class" | "process-name" | "coordinates";
 
 // ============================================================
 // Executor → Server: 注册
@@ -34,6 +40,13 @@ export interface ExecutorMeta {
   appId?: string;
   deviceId?: string;
   osVersion?: string;
+
+  // Desktop specific
+  os?: DesktopOS;
+  hostname?: string;
+  username?: string;
+  activeWindow?: string;
+  displays?: Array<{ id: number; width: number; height: number; primary: boolean }>;
 }
 
 // ============================================================
@@ -146,6 +159,112 @@ export interface GetAttributeParams {
 }
 
 // ============================================================
+// Desktop-specific 命令参数
+// ============================================================
+
+// 鼠标操作 (坐标点击)
+export interface MouseClickParams {
+  x: number;
+  y: number;
+  button?: "left" | "right" | "middle";
+  clicks?: number; // 1 = single, 2 = double
+}
+
+export interface MouseMoveParams {
+  x: number;
+  y: number;
+  duration?: number; // 移动时长 (ms)
+}
+
+export interface MouseDragParams {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  duration?: number;
+}
+
+// 窗口操作
+export interface WindowListParams {
+  includeMinimized?: boolean;
+}
+
+export interface WindowFocusParams {
+  title?: string;
+  processName?: string;
+  windowClass?: string;
+}
+
+export interface WindowResizeParams {
+  title?: string;
+  processName?: string;
+  width: number;
+  height: number;
+}
+
+export interface WindowMoveParams {
+  title?: string;
+  processName?: string;
+  x: number;
+  y: number;
+}
+
+export interface WindowStateParams {
+  title?: string;
+  processName?: string;
+  state: "minimize" | "maximize" | "restore" | "close";
+}
+
+// 剪贴板操作
+export interface ClipboardReadParams {
+  format?: "text" | "html" | "image";
+}
+
+export interface ClipboardWriteParams {
+  text: string;
+}
+
+// 系统命令
+export interface ShellExecParams {
+  command: string;
+  cwd?: string;
+  timeout?: number;
+}
+
+export interface AppLaunchParams {
+  path: string;
+  args?: string[];
+}
+
+export interface AppCloseParams {
+  processName?: string;
+  pid?: number;
+}
+
+// 文件操作
+export interface FileReadParams {
+  path: string;
+  encoding?: string;
+}
+
+export interface FileWriteParams {
+  path: string;
+  content: string;
+  encoding?: string;
+}
+
+export interface FileExistsParams {
+  path: string;
+}
+
+// 通知
+export interface NotifyParams {
+  title: string;
+  message: string;
+  icon?: string;
+}
+
+// ============================================================
 // Executor → Server: 执行结果
 // ============================================================
 export interface ExecuteResult {
@@ -232,3 +351,73 @@ export interface UiHighlightParams extends ToolParams, HighlightParams {}
 export interface UiSelectParams extends ToolParams, SelectParams {}
 export interface UiFocusParams extends ToolParams, FocusParams {}
 export interface UiBlurParams extends ToolParams, BlurParams {}
+
+// Desktop-specific MCP Tool 参数
+export interface DesktopMouseClickParams extends ToolParams, MouseClickParams {}
+export interface DesktopMouseMoveParams extends ToolParams, MouseMoveParams {}
+export interface DesktopMouseDragParams extends ToolParams, MouseDragParams {}
+export interface DesktopWindowListParams extends ToolParams, WindowListParams {}
+export interface DesktopWindowFocusParams extends ToolParams, WindowFocusParams {}
+export interface DesktopWindowResizeParams extends ToolParams, WindowResizeParams {}
+export interface DesktopWindowMoveParams extends ToolParams, WindowMoveParams {}
+export interface DesktopWindowStateParams extends ToolParams, WindowStateParams {}
+export interface DesktopClipboardReadParams extends ToolParams, ClipboardReadParams {}
+export interface DesktopClipboardWriteParams extends ToolParams, ClipboardWriteParams {}
+export interface DesktopShellExecParams extends ToolParams, ShellExecParams {}
+export interface DesktopAppLaunchParams extends ToolParams, AppLaunchParams {}
+export interface DesktopAppCloseParams extends ToolParams, AppCloseParams {}
+export interface DesktopFileReadParams extends ToolParams, FileReadParams {}
+export interface DesktopFileWriteParams extends ToolParams, FileWriteParams {}
+export interface DesktopFileExistsParams extends ToolParams, FileExistsParams {}
+export interface DesktopNotifyParams extends ToolParams, NotifyParams {}
+
+// ============================================================
+// 平台能力定义
+// ============================================================
+export const BROWSER_CAPABILITIES = [
+  "navigate",
+  "click",
+  "doubleClick",
+  "rightClick",
+  "hover",
+  "type",
+  "scroll",
+  "screenshot",
+  "eval",
+  "wait",
+  "getContent",
+  "getAttribute",
+  "keyboard",
+  "dragDrop",
+  "highlight",
+  "select",
+  "focus",
+  "blur",
+] as const;
+
+export const DESKTOP_CAPABILITIES = [
+  "screenshot",
+  "keyboard",
+  "type",
+  "mouseClick",
+  "mouseMove",
+  "mouseDrag",
+  "scroll",
+  "windowList",
+  "windowFocus",
+  "windowResize",
+  "windowMove",
+  "windowState",
+  "clipboardRead",
+  "clipboardWrite",
+  "shellExec",
+  "appLaunch",
+  "appClose",
+  "fileRead",
+  "fileWrite",
+  "fileExists",
+  "notify",
+] as const;
+
+export type BrowserCapability = typeof BROWSER_CAPABILITIES[number];
+export type DesktopCapability = typeof DESKTOP_CAPABILITIES[number];

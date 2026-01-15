@@ -1,6 +1,6 @@
 # Wire Agent
 
-通用 UI 自动化代理，通过 MCP 协议与 Claude Code 集成，支持浏览器和未来的移动端。
+通用 UI 自动化代理，通过 MCP 协议与 Claude Code 集成，支持浏览器、桌面和未来的移动端。
 
 ## 架构概览
 
@@ -9,13 +9,15 @@ Claude Code CLI
       ↓ MCP Protocol (stdio)
 Wire Agent Server (Node.js)
       ↓ WebSocket (:3000)
-Executors (Browser Extension / Mobile App)
+Executors (Browser Extension / Desktop App / Mobile App)
 ```
 
 **核心设计**:
-- Server 作为 MCP Server，暴露 `ui_*` 工具给 Claude Code
-- Executor 是通用抽象层，browser/mobile 都实现相同的 WebSocket 协议
+
+- Server 作为 MCP Server，暴露 `ui_*` 和 `desktop_*` 工具给 Claude Code
+- Executor 是通用抽象层，browser/desktop/mobile 都实现相同的 WebSocket 协议
 - 支持多标签页/多设备，通过 `executorId` 区分
+- 不同平台拥有不同的工具集（见下方平台能力对比）
 
 ## 目录结构
 
@@ -25,6 +27,7 @@ Executors (Browser Extension / Mobile App)
   - `src/executor/` - Executor 管理器
   - `src/utils/` - 日志等工具函数
 - `executors/browser/` - Chrome Extension (MV3)
+- `executors/desktop/` - Desktop Agent (Node.js, 支持 Windows/macOS/Linux)
 - `executors/mobile/` - 未来: iOS/Android
 - `packages/protocol/` - 共享协议类型定义
 
@@ -97,6 +100,65 @@ npm run build:server
 | `ui_wait` | 等待元素/时间 |
 | `ui_eval` | 执行 JavaScript |
 
+### 桌面端专属工具 (Desktop Only)
+
+这些工具只能在桌面 Executor (Windows/macOS/Linux) 上使用：
+
+#### 鼠标操作
+
+| 工具 | 说明 |
+|------|------|
+| `desktop_mouse_click` | 在屏幕坐标点击 |
+| `desktop_mouse_move` | 移动鼠标到指定坐标 |
+| `desktop_mouse_drag` | 拖拽鼠标 |
+
+#### 窗口管理
+
+| 工具 | 说明 |
+|------|------|
+| `desktop_window_list` | 列出所有打开的窗口 |
+| `desktop_window_focus` | 聚焦/激活指定窗口 |
+| `desktop_window_state` | 改变窗口状态 (最小化/最大化/还原/关闭) |
+
+#### 剪贴板
+
+| 工具 | 说明 |
+|------|------|
+| `desktop_clipboard_read` | 读取系统剪贴板内容 |
+| `desktop_clipboard_write` | 写入内容到系统剪贴板 |
+
+#### 系统操作
+
+| 工具 | 说明 |
+|------|------|
+| `desktop_shell_exec` | 执行 shell 命令 |
+| `desktop_app_launch` | 启动应用程序 |
+| `desktop_app_close` | 关闭应用程序 |
+| `desktop_notify` | 显示系统通知 |
+
+#### 文件操作
+
+| 工具 | 说明 |
+|------|------|
+| `desktop_file_read` | 读取文件内容 |
+| `desktop_file_write` | 写入文件内容 |
+| `desktop_file_exists` | 检查文件是否存在 |
+
+## 平台能力对比
+
+| 能力 | Browser | Desktop | Mobile (Future) |
+|------|---------|---------|-----------------|
+| 元素点击/输入 | ✅ CSS/XPath 选择器 | ✅ 坐标点击 | ✅ |
+| 截图 | ✅ | ✅ | ✅ |
+| 键盘输入 | ✅ | ✅ | ✅ |
+| 窗口管理 | ❌ | ✅ | ❌ |
+| 剪贴板 | ❌ | ✅ | ❌ |
+| Shell 执行 | ❌ | ✅ | ❌ |
+| 文件操作 | ❌ | ✅ | ❌ |
+| 系统通知 | ❌ | ✅ | ✅ |
+| JavaScript 执行 | ✅ | ❌ | ❌ |
+| DOM 操作 | ✅ | ❌ | ❌ |
+
 ### 选择器类型
 
 所有涉及元素的工具都支持以下选择器类型 (`selectorType` 参数):
@@ -136,6 +198,20 @@ npm run build:server
 }
 ```
 4. 使用: `claude -p "Navigate to google.com and search for 'Claude AI'"`
+
+### 使用桌面 Executor
+
+1. 编译桌面端: `npm run build -w @wire-agent/desktop`
+2. 启动桌面 Executor: `node executors/desktop/dist/index.js`
+3. 桌面 Executor 会自动连接到 WebSocket 服务器并注册
+4. 使用桌面工具: `claude -p "Take a screenshot and list all windows"`
+
+**注意**: 桌面 Executor 需要额外的系统依赖：
+
+- **robotjs**: 需要 Python 和编译工具 (node-gyp)
+- **Windows**: 需要 Visual Studio Build Tools
+- **macOS**: 需要 Xcode Command Line Tools
+- **Linux**: 需要 `libxtst-dev` 和 `libpng-dev`
 
 ## 扩展开发
 

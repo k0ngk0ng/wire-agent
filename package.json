@@ -10,8 +10,9 @@
   ],
   "scripts": {
     "dev:server": "npm run dev -w server",
-    "build": "npm run build -w packages/protocol && npm run build -w server",
+    "build": "npm run build -w packages/protocol && npm run build -w server && npm run build -w @wire-agent/desktop-executor",
     "build:server": "npm run build -w server",
-    "build:protocol": "npm run build -w packages/protocol"
+    "build:protocol": "npm run build -w packages/protocol",
+    "build:desktop": "npm run build -w @wire-agent/desktop-executor"
   }
 }
