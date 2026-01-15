@@ -9,10 +9,94 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
+  # Build server and browser extension (platform-independent)
+  build-common:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      # Update version in package.json files
+      - name: Update version in package.json
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" server/package.json
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" packages/protocol/package.json
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" executors/desktop/package.json
+          # Update browser extension manifest.json
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" executors/browser/manifest.json
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxtst-dev libpng-dev
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build protocol and server
+        run: |
+          npm run build -w packages/protocol
+          npm run build -w server
+
+      # Package server
+      - name: Package server
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          mkdir -p dist/wire-agent-server-${VERSION}
+          cp -r server/dist dist/wire-agent-server-${VERSION}/
+          cp server/package.json dist/wire-agent-server-${VERSION}/
+          cp packages/protocol/dist dist/wire-agent-server-${VERSION}/protocol -r
+          cp packages/protocol/package.json dist/wire-agent-server-${VERSION}/protocol/
+          cd dist
+          tar -czvf wire-agent-server-${VERSION}.tar.gz wire-agent-server-${VERSION}
+
+      # Package browser extension
+      - name: Package browser extension
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          mkdir -p dist/wire-agent-browser-${VERSION}
+          cp -r executors/browser/* dist/wire-agent-browser-${VERSION}/
+          cd dist
+          zip -r wire-agent-browser-${VERSION}.zip wire-agent-browser-${VERSION}
+
+      - name: Upload server artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wire-agent-server-${{ steps.version.outputs.version }}
+          path: dist/wire-agent-server-*.tar.gz
+
+      - name: Upload browser artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wire-agent-browser-${{ steps.version.outputs.version }}
+          path: dist/wire-agent-browser-*.zip
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+  # Build desktop executor (platform-specific due to native dependencies)
+  build-desktop:
     runs-on: ${{ matrix.os }}
+    needs: build-common
 
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -26,41 +110,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Get version from tag
-        id: version
-        shell: bash
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Building version: $VERSION"
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      # Update version in package.json files
-      - name: Update version in package.json (Unix)
+      # Update version
+      - name: Update version (Unix)
         if: runner.os != 'Windows'
         run: |
-          VERSION=${{ steps.version.outputs.version }}
-          # Update root package.json
+          VERSION=${{ needs.build-common.outputs.version }}
           sed -i.bak "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
-          # Update server package.json
           sed -i.bak "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" server/package.json
-          # Update protocol package.json
           sed -i.bak "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" packages/protocol/package.json
-          # Update desktop executor package.json
           sed -i.bak "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" executors/desktop/package.json
-          # Cleanup backup files
           find . -name "*.bak" -delete
 
-      - name: Update version in package.json (Windows)
+      - name: Update version (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $version = "${{ steps.version.outputs.version }}"
+          $version = "${{ needs.build-common.outputs.version }}"
           $files = @("package.json", "server/package.json", "packages/protocol/package.json", "executors/desktop/package.json")
           foreach ($file in $files) {
             $content = Get-Content $file -Raw
@@ -68,61 +139,61 @@ jobs:
             Set-Content $file $content -NoNewline
           }
 
-      # Linux dependencies for robotjs
+      # Platform-specific dependencies
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libxtst-dev libpng-dev
 
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: |
+          xcode-select --install 2>/dev/null || true
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Build all
-        run: npm run build
-
-      # Package server
-      - name: Package server
-        shell: bash
+      - name: Build desktop executor
         run: |
-          mkdir -p dist/server
-          cp -r server/dist dist/server/
-          cp server/package.json dist/server/
+          npm run build -w packages/protocol
+          npm run build -w @wire-agent/desktop-executor
 
       # Package desktop executor
-      - name: Package desktop executor
+      - name: Package desktop (Unix)
+        if: runner.os != 'Windows'
         shell: bash
         run: |
-          mkdir -p dist/desktop
-          cp -r executors/desktop/dist dist/desktop/
-          cp executors/desktop/package.json dist/desktop/
-
-      # Create archive
-      - name: Create archive (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          VERSION=${{ steps.version.outputs.version }}
+          VERSION=${{ needs.build-common.outputs.version }}
+          mkdir -p dist/wire-agent-desktop-${VERSION}-${{ matrix.platform }}
+          cp -r executors/desktop/dist dist/wire-agent-desktop-${VERSION}-${{ matrix.platform }}/
+          cp executors/desktop/package.json dist/wire-agent-desktop-${VERSION}-${{ matrix.platform }}/
           cd dist
-          tar -czvf wire-agent-${VERSION}-${{ matrix.platform }}.tar.gz server desktop
+          tar -czvf wire-agent-desktop-${VERSION}-${{ matrix.platform }}.tar.gz wire-agent-desktop-${VERSION}-${{ matrix.platform }}
 
-      - name: Create archive (Windows)
+      - name: Package desktop (Windows)
         if: runner.os == 'Windows'
+        shell: pwsh
         run: |
-          $version = "${{ steps.version.outputs.version }}"
+          $version = "${{ needs.build-common.outputs.version }}"
+          $dir = "dist/wire-agent-desktop-${version}-${{ matrix.platform }}"
+          New-Item -ItemType Directory -Force -Path $dir
+          Copy-Item -Recurse executors/desktop/dist/* $dir/
+          Copy-Item executors/desktop/package.json $dir/
           cd dist
-          Compress-Archive -Path server, desktop -DestinationPath "wire-agent-${version}-${{ matrix.platform }}.zip"
+          Compress-Archive -Path "wire-agent-desktop-${version}-${{ matrix.platform }}" -DestinationPath "wire-agent-desktop-${version}-${{ matrix.platform }}.zip"
 
-      # Upload artifacts
-      - name: Upload artifacts
+      - name: Upload desktop artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wire-agent-${{ steps.version.outputs.version }}-${{ matrix.platform }}
+          name: wire-agent-desktop-${{ needs.build-common.outputs.version }}-${{ matrix.platform }}
           path: |
-            dist/wire-agent-*.tar.gz
-            dist/wire-agent-*.zip
+            dist/wire-agent-desktop-*.tar.gz
+            dist/wire-agent-desktop-*.zip
 
+  # Create GitHub Release
   create-release:
-    needs: build-and-release
+    needs: [build-common, build-desktop]
     runs-on: ubuntu-latest
 
     steps:
@@ -131,6 +202,9 @@ jobs:
         with:
           path: artifacts
 
+      - name: List artifacts
+        run: find artifacts -type f
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -138,3 +212,16 @@ jobs:
             artifacts/**/*.tar.gz
             artifacts/**/*.zip
           generate_release_notes: true
+          body: |
+            ## Downloads
+
+            ### Server (all platforms)
+            - `wire-agent-server-${{ needs.build-common.outputs.version }}.tar.gz` - MCP Server
+
+            ### Browser Extension
+            - `wire-agent-browser-${{ needs.build-common.outputs.version }}.zip` - Chrome Extension
+
+            ### Desktop Executor (platform-specific)
+            - `wire-agent-desktop-${{ needs.build-common.outputs.version }}-linux.tar.gz` - Linux
+            - `wire-agent-desktop-${{ needs.build-common.outputs.version }}-macos.tar.gz` - macOS
+            - `wire-agent-desktop-${{ needs.build-common.outputs.version }}-windows.zip` - Windows
