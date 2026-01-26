@@ -430,7 +430,9 @@ function broadcastStatus(connected) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "GET_STATUS") {
-    sendResponse({ connected: isConnected });
+    // Check actual WebSocket state, not just the flag
+    const actuallyConnected = ws && ws.readyState === WebSocket.OPEN;
+    sendResponse({ connected: actuallyConnected });
     return true;
   }
 
@@ -448,8 +450,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // ============================================================
 
 chrome.action.onClicked.addListener(async (tab) => {
-  // Open side panel
-  await chrome.sidePanel.open({ windowId: tab.windowId });
+  // Open side panel (Chrome 114+)
+  if (chrome.sidePanel && chrome.sidePanel.open) {
+    await chrome.sidePanel.open({ windowId: tab.windowId });
+  } else {
+    // Fallback for older Chrome versions
+    console.warn("[WireAgent] Side panel API not available. Chrome 114+ required.");
+  }
 });
 
 // ============================================================
