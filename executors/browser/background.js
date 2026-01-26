@@ -1,7 +1,7 @@
 // Wire Agent - Browser Executor Background Script
 // Connects to Wire Agent Server via WebSocket and routes commands to content scripts
 
-const WS_URL = "ws://localhost:3000";
+const WS_URL = "ws://localhost:3888";
 const RECONNECT_INTERVAL = 3000;
 
 let ws = null;
