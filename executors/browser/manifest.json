@@ -11,7 +11,12 @@
     "cookies",
     "clipboardRead",
     "clipboardWrite",
-    "sidePanel"
+    "sidePanel",
+    "debugger",
+    "downloads",
+    "notifications",
+    "webNavigation",
+    "browsingData"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -24,7 +29,8 @@
     {
       "matches": ["<all_urls>"],
       "js": ["contentScript.js"],
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "all_frames": true
     }
   ],
   "side_panel": {
