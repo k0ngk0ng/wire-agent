@@ -8,7 +8,7 @@
 Claude Code CLI
       ↓ MCP Protocol (stdio)
 Wire Agent Server (Node.js)
-      ↓ WebSocket (:3000)
+      ↓ WebSocket (:3888)
 Executors (Browser Extension / Desktop App / Mobile App)
 ```
 
