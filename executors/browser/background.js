@@ -38,8 +38,8 @@ function connect() {
       hasLoggedDisconnect = false;
       broadcastStatus(true);
 
-      // Register all active tabs
-      registerAllTabs();
+      // Register the browser extension as a single executor
+      registerBrowserExecutor();
     };
 
     ws.onmessage = async (event) => {
@@ -89,7 +89,10 @@ function scheduleReconnect() {
 
 function send(message) {
   if (ws && ws.readyState === WebSocket.OPEN) {
+    console.log("[WireAgent] Sending:", message.type);
     ws.send(JSON.stringify(message));
+  } else {
+    console.warn("[WireAgent] Cannot send, ws not open:", ws?.readyState);
   }
 }
 
@@ -97,16 +100,111 @@ function send(message) {
 // Tab Registration
 // ============================================================
 
+// Register the browser extension as a single executor
+function registerBrowserExecutor() {
+  console.log("[WireAgent] Registering browser executor");
+  send({
+    type: "register",
+    executorId: "browser",
+    platform: "browser",
+    capabilities: [
+      // Basic interaction
+      "navigate",
+      "click",
+      "doubleClick",
+      "rightClick",
+      "hover",
+      "type",
+      "scroll",
+      "screenshot",
+      "eval",
+      "wait",
+      "getContent",
+      "getAttribute",
+      "keyboard",
+      "dragDrop",
+      "highlight",
+      "select",
+      "focus",
+      "blur",
+      // Tab management
+      "tabList",
+      "tabCreate",
+      "tabClose",
+      "tabActivate",
+      "tabReload",
+      "tabDuplicate",
+      // Navigation
+      "goBack",
+      "goForward",
+      "getUrl",
+      "getTitle",
+      // Storage & Cookies
+      "storageGet",
+      "storageSet",
+      "storageClear",
+      "cookieGet",
+      "cookieSet",
+      "cookieDelete",
+      "cookieGetAll",
+      // Forms
+      "formSubmit",
+      "formReset",
+      "checkbox",
+      // Element queries
+      "querySelector",
+      "querySelectorAll",
+      "getElementInfo",
+      "getBoundingRect",
+      "isVisible",
+      "isEnabled",
+      "elementExists",
+      "countElements",
+      // Frame operations
+      "getFrames",
+      // Text operations
+      "selectText",
+      "copyText",
+      "getText",
+      // Media control
+      "mediaPlay",
+      "mediaPause",
+      "mediaSetVolume",
+      "mediaGetState",
+      // Position-based actions
+      "clickAtPosition",
+      "hoverAtPosition",
+      // Element state
+      "scrollIntoView",
+      "getComputedStyle",
+      "getScrollPosition",
+      "setScrollPosition",
+      // Performance & Debug
+      "getPerformance",
+      "getWindowInfo",
+      "getAccessibilityTree",
+    ],
+    meta: {
+      userAgent: navigator.userAgent,
+    },
+  });
+}
+
 async function registerAllTabs() {
   const tabs = await chrome.tabs.query({});
+  console.log("[WireAgent] Registering", tabs.length, "tabs");
   for (const tab of tabs) {
-    if (tab.url && !tab.url.startsWith("chrome://")) {
+    console.log("[WireAgent] Tab:", tab.id, tab.url);
+    if (tab.url && !tab.url.startsWith("chrome://") && !tab.url.startsWith("chrome-extension://")) {
       registerTab(tab);
+    } else {
+      console.log("[WireAgent] Skipped tab (chrome:// or no url)");
     }
   }
 }
 
 function registerTab(tab) {
+  console.log("[WireAgent] Registering tab:", tab.id, tab.url);
   send({
     type: "register",
     executorId: getExecutorId(tab.id),
