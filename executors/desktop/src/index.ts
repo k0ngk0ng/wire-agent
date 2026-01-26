@@ -2,7 +2,7 @@
 
 import { DesktopExecutor } from "./executor.js";
 
-const WS_URL = process.env.WIRE_AGENT_URL || "ws://localhost:3000";
+const WS_URL = process.env.WIRE_AGENT_URL || "ws://localhost:3888";
 
 async function main() {
   console.log("[DesktopExecutor] Starting...");
