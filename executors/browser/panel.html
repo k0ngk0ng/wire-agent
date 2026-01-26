@@ -36,15 +36,15 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 12px;
+      padding: 12px 16px;
       background: #16213e;
       border-radius: 8px;
       margin-bottom: 16px;
     }
 
     .status-dot {
-      width: 10px;
-      height: 10px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
       background: #ff4757;
       transition: background 0.3s;
@@ -56,7 +56,7 @@
 
     .status-text {
       flex: 1;
-      font-size: 13px;
+      font-size: 14px;
     }
 
     .reconnect-btn {
@@ -105,45 +105,13 @@
 
     .info-value {
       color: #eee;
-      max-width: 200px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
-    .log-container {
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
-    .log-entry {
-      padding: 6px 8px;
-      margin-bottom: 4px;
-      background: #0f0f23;
-      border-radius: 4px;
-      font-family: 'Monaco', 'Menlo', monospace;
-      font-size: 11px;
-      word-break: break-all;
-    }
-
-    .log-entry.success {
-      border-left: 3px solid #2ed573;
-    }
-
-    .log-entry.error {
-      border-left: 3px solid #ff4757;
-    }
-
-    .log-entry .time {
+    .hint {
       color: #666;
-      margin-right: 8px;
-    }
-
-    .empty-state {
+      font-size: 12px;
       text-align: center;
-      color: #666;
-      padding: 20px;
-      font-size: 13px;
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -167,11 +135,14 @@
   </div>
 
   <div class="section">
-    <div class="section-title">Activity Log</div>
-    <div class="log-container" id="logContainer">
-      <div class="empty-state">Waiting for commands...</div>
+    <div class="section-title">Executors</div>
+    <div class="info-row">
+      <span class="info-label">Tabs</span>
+      <span class="info-value" id="tabCount">0</span>
     </div>
   </div>
+
+  <p class="hint">Activity logs are in DevTools Console (F12)</p>
 
   <script src="panel.js"></script>
 </body>

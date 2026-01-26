@@ -3,10 +3,7 @@
 const statusDot = document.getElementById("statusDot");
 const statusText = document.getElementById("statusText");
 const reconnectBtn = document.getElementById("reconnectBtn");
-const logContainer = document.getElementById("logContainer");
-
-let logs = [];
-const MAX_LOGS = 50;
+const tabCountEl = document.getElementById("tabCount");
 
 // ============================================================
 // Status Updates
@@ -24,44 +21,11 @@ function updateStatus(connected) {
   }
 }
 
-// ============================================================
-// Logging
-// ============================================================
-
-function addLog(message, success = true) {
-  const now = new Date();
-  const time = now.toLocaleTimeString("en-US", { hour12: false });
-
-  logs.unshift({ time, message, success });
-  if (logs.length > MAX_LOGS) {
-    logs = logs.slice(0, MAX_LOGS);
-  }
-
-  renderLogs();
-}
-
-function renderLogs() {
-  if (logs.length === 0) {
-    logContainer.innerHTML = '<div class="empty-state">Waiting for commands...</div>';
-    return;
-  }
-
-  logContainer.innerHTML = logs
-    .map(
-      (log) => `
-      <div class="log-entry ${log.success ? "success" : "error"}">
-        <span class="time">${log.time}</span>
-        ${escapeHtml(log.message)}
-      </div>
-    `
-    )
-    .join("");
-}
-
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
+function updateTabCount() {
+  chrome.tabs.query({}, (tabs) => {
+    const count = tabs.filter(t => t.url && !t.url.startsWith("chrome://")).length;
+    tabCountEl.textContent = count;
+  });
 }
 
 // ============================================================
@@ -70,13 +34,9 @@ function escapeHtml(text) {
 
 reconnectBtn.addEventListener("click", () => {
   reconnectBtn.disabled = true;
-  chrome.runtime.sendMessage({ type: "RECONNECT" }, (response) => {
-    addLog("Reconnecting...");
-    setTimeout(() => {
-      chrome.runtime.sendMessage({ type: "GET_STATUS" }, (res) => {
-        updateStatus(res?.connected || false);
-      });
-    }, 1000);
+  chrome.runtime.sendMessage({ type: "RECONNECT" }, () => {
+    console.log("[WireAgent] Reconnecting...");
+    setTimeout(refreshStatus, 1000);
   });
 });
 
@@ -84,16 +44,11 @@ reconnectBtn.addEventListener("click", () => {
 // Message Listener
 // ============================================================
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message) => {
   if (message.type === "CONNECTION_STATUS") {
     updateStatus(message.connected);
-    addLog(message.connected ? "Connected" : "Disconnected", message.connected);
+    console.log("[WireAgent]", message.connected ? "Connected" : "Disconnected");
   }
-
-  if (message.type === "COMMAND_EXECUTED") {
-    addLog(`${message.action}: ${message.result}`, message.success);
-  }
-
   return false;
 });
 
@@ -101,8 +56,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Initialize
 // ============================================================
 
-chrome.runtime.sendMessage({ type: "GET_STATUS" }, (response) => {
-  updateStatus(response?.connected || false);
-});
+function refreshStatus() {
+  chrome.runtime.sendMessage({ type: "GET_STATUS" }, (response) => {
+    updateStatus(response?.connected || false);
+  });
+}
 
-console.log("[WireAgent] Panel initialized");
+// Initial status check
+refreshStatus();
+updateTabCount();
+
+// Poll status every 3 seconds
+setInterval(refreshStatus, 3000);
+setInterval(updateTabCount, 5000);
+
+console.log("[WireAgent] Panel initialized - Activity logs will appear here");
