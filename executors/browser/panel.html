@@ -107,11 +107,55 @@
       color: #eee;
     }
 
-    .hint {
-      color: #666;
+    .command-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .command-item {
+      padding: 8px;
+      margin-bottom: 6px;
+      background: #0f0f23;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Menlo', monospace;
       font-size: 12px;
+    }
+
+    .command-item.success {
+      border-left: 3px solid #2ed573;
+    }
+
+    .command-item.error {
+      border-left: 3px solid #ff4757;
+    }
+
+    .command-item.pending {
+      border-left: 3px solid #ffa502;
+    }
+
+    .command-action {
+      color: #74b9ff;
+      font-weight: bold;
+    }
+
+    .command-time {
+      color: #666;
+      font-size: 10px;
+      float: right;
+    }
+
+    .command-params {
+      color: #888;
+      font-size: 11px;
+      margin-top: 4px;
+      word-break: break-all;
+    }
+
+    .empty-state {
+      color: #666;
       text-align: center;
-      margin-top: 20px;
+      padding: 20px;
+      font-size: 13px;
     }
   </style>
 </head>
@@ -135,14 +179,11 @@
   </div>
 
   <div class="section">
-    <div class="section-title">Executors</div>
-    <div class="info-row">
-      <span class="info-label">Tabs</span>
-      <span class="info-value" id="tabCount">0</span>
+    <div class="section-title">Commands</div>
+    <div class="command-list" id="commandList">
+      <div class="empty-state">Waiting for commands...</div>
     </div>
   </div>
-
-  <p class="hint">Activity logs are in DevTools Console (F12)</p>
 
   <script src="panel.js"></script>
 </body>

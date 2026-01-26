@@ -3,7 +3,10 @@
 const statusDot = document.getElementById("statusDot");
 const statusText = document.getElementById("statusText");
 const reconnectBtn = document.getElementById("reconnectBtn");
-const tabCountEl = document.getElementById("tabCount");
+const commandList = document.getElementById("commandList");
+
+let commands = [];
+const MAX_COMMANDS = 20;
 
 // ============================================================
 // Status Updates
@@ -17,15 +20,55 @@ function updateStatus(connected) {
     statusDot.classList.remove("connected");
     statusText.textContent = "Disconnected";
   }
-  // Always enable reconnect button
   reconnectBtn.disabled = false;
 }
 
-function updateTabCount() {
-  chrome.tabs.query({}, (tabs) => {
-    const count = tabs.filter(t => t.url && !t.url.startsWith("chrome://")).length;
-    tabCountEl.textContent = count;
-  });
+// ============================================================
+// Command Display
+// ============================================================
+
+function addCommand(action, params, status = "pending") {
+  const time = new Date().toLocaleTimeString("en-US", { hour12: false });
+
+  commands.unshift({ action, params, status, time, id: Date.now() });
+  if (commands.length > MAX_COMMANDS) {
+    commands = commands.slice(0, MAX_COMMANDS);
+  }
+
+  renderCommands();
+  return commands[0].id;
+}
+
+function updateCommandStatus(id, status) {
+  const cmd = commands.find(c => c.id === id);
+  if (cmd) {
+    cmd.status = status;
+    renderCommands();
+  }
+}
+
+function renderCommands() {
+  if (commands.length === 0) {
+    commandList.innerHTML = '<div class="empty-state">Waiting for commands...</div>';
+    return;
+  }
+
+  commandList.innerHTML = commands.map(cmd => {
+    const paramsStr = cmd.params ? JSON.stringify(cmd.params).slice(0, 100) : "";
+    return `
+      <div class="command-item ${cmd.status}">
+        <span class="command-action">${escapeHtml(cmd.action)}</span>
+        <span class="command-time">${cmd.time}</span>
+        ${paramsStr ? `<div class="command-params">${escapeHtml(paramsStr)}</div>` : ""}
+      </div>
+    `;
+  }).join("");
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 // ============================================================
@@ -47,8 +90,24 @@ reconnectBtn.addEventListener("click", () => {
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === "CONNECTION_STATUS") {
     updateStatus(message.connected);
-    console.log("[WireAgent]", message.connected ? "Connected" : "Disconnected");
   }
+
+  if (message.type === "COMMAND_START") {
+    addCommand(message.action, message.params, "pending");
+  }
+
+  if (message.type === "COMMAND_RESULT") {
+    // Update the most recent pending command with this action
+    const cmd = commands.find(c => c.action === message.action && c.status === "pending");
+    if (cmd) {
+      cmd.status = message.success ? "success" : "error";
+      renderCommands();
+    } else {
+      // If no pending command found, add a new one with result
+      addCommand(message.action, message.params, message.success ? "success" : "error");
+    }
+  }
+
   return false;
 });
 
@@ -62,12 +121,7 @@ function refreshStatus() {
   });
 }
 
-// Initial status check
 refreshStatus();
-updateTabCount();
-
-// Poll status every 3 seconds
 setInterval(refreshStatus, 3000);
-setInterval(updateTabCount, 5000);
 
-console.log("[WireAgent] Panel initialized - Activity logs will appear here");
+console.log("[WireAgent] Panel initialized");

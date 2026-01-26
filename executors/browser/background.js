@@ -310,6 +310,8 @@ function unregisterTab(tabId) {
 async function handleServerMessage(message) {
   if (message.type === "execute") {
     const result = await executeCommand(message);
+    // Notify panel of result
+    notifyCommandResult(message.action, result.success);
     send(result);
   } else if (message.type === "control") {
     if (message.action === "ping") {
@@ -321,6 +323,13 @@ async function handleServerMessage(message) {
 async function executeCommand(command) {
   const { id, action, params } = command;
   console.log("[WireAgent] Executing:", action, params);
+
+  // Notify panel that command started
+  chrome.runtime.sendMessage({
+    type: "COMMAND_START",
+    action,
+    params,
+  }).catch(() => {});
 
   try {
     // Extract tabId from executorId if present
@@ -500,8 +509,23 @@ async function executeCommand(command) {
 
     return { type: "result", id, ...response };
   } catch (err) {
+    // Notify panel of error
+    chrome.runtime.sendMessage({
+      type: "COMMAND_RESULT",
+      action,
+      success: false,
+    }).catch(() => {});
     return { type: "result", id, success: false, error: err.message };
   }
+}
+
+// Wrapper to notify panel after command completes
+function notifyCommandResult(action, success) {
+  chrome.runtime.sendMessage({
+    type: "COMMAND_RESULT",
+    action,
+    success,
+  }).catch(() => {});
 }
 
 // ============================================================
