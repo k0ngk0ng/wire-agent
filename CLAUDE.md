@@ -55,7 +55,7 @@ npm run build:server
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `WS_PORT` | 3000 | WebSocket 服务器端口 |
+| `WS_PORT` | 3888 | WebSocket 服务器端口 |
 | `LOG_LEVEL` | info | 日志级别 (debug/info/warn/error) |
 
 ## MCP 工具

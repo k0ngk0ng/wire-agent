@@ -3,7 +3,7 @@ import { ClientMessage } from "@wire-agent/protocol";
 import { executorManager } from "../executor/manager";
 import { wsLogger as log } from "../utils/logger";
 
-const WS_PORT = parseInt(process.env.WS_PORT || "3000", 10);
+const WS_PORT = parseInt(process.env.WS_PORT || "3888", 10);
 
 let wss: WebSocketServer | null = null;
 
