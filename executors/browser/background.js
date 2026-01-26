@@ -2,11 +2,14 @@
 // Connects to Wire Agent Server via WebSocket and routes commands to content scripts
 
 const WS_URL = "ws://localhost:3888";
-const RECONNECT_INTERVAL = 3000;
+const RECONNECT_INTERVAL = 5000; // 5 seconds between retries
+const MAX_RECONNECT_INTERVAL = 30000; // Max 30 seconds
 
 let ws = null;
 let isConnected = false;
 let reconnectTimer = null;
+let reconnectAttempts = 0;
+let hasLoggedDisconnect = false;
 
 // Generate executor ID based on extension ID
 function getExecutorId(tabId) {
@@ -20,7 +23,10 @@ function getExecutorId(tabId) {
 function connect() {
   if (ws && ws.readyState === WebSocket.OPEN) return;
 
-  console.log("[WireAgent] Connecting to server...");
+  // Only log first attempt or after successful connection
+  if (reconnectAttempts === 0) {
+    console.log("[WireAgent] Connecting to server...");
+  }
 
   try {
     ws = new WebSocket(WS_URL);
@@ -28,6 +34,8 @@ function connect() {
     ws.onopen = () => {
       console.log("[WireAgent] Connected to server");
       isConnected = true;
+      reconnectAttempts = 0;
+      hasLoggedDisconnect = false;
       broadcastStatus(true);
 
       // Register all active tabs
@@ -39,33 +47,43 @@ function connect() {
         const message = JSON.parse(event.data);
         await handleServerMessage(message);
       } catch (err) {
-        console.error("[WireAgent] Failed to handle message:", err);
+        // Silent - don't log parse errors
       }
     };
 
     ws.onclose = () => {
-      console.log("[WireAgent] Disconnected from server");
+      if (!hasLoggedDisconnect && isConnected) {
+        console.log("[WireAgent] Disconnected from server");
+        hasLoggedDisconnect = true;
+      }
       isConnected = false;
       ws = null;
       broadcastStatus(false);
       scheduleReconnect();
     };
 
-    ws.onerror = (err) => {
-      console.error("[WireAgent] WebSocket error:", err);
+    ws.onerror = () => {
+      // Silent - Chrome will log the error anyway, we just handle reconnect
     };
   } catch (err) {
-    console.error("[WireAgent] Failed to connect:", err);
     scheduleReconnect();
   }
 }
 
 function scheduleReconnect() {
   if (reconnectTimer) return;
+
+  // Exponential backoff: 5s, 10s, 20s, 30s (max)
+  const delay = Math.min(
+    RECONNECT_INTERVAL * Math.pow(2, reconnectAttempts),
+    MAX_RECONNECT_INTERVAL
+  );
+  reconnectAttempts++;
+
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
     connect();
-  }, RECONNECT_INTERVAL);
+  }, delay);
 }
 
 function send(message) {
