@@ -13,12 +13,12 @@ function updateStatus(connected) {
   if (connected) {
     statusDot.classList.add("connected");
     statusText.textContent = "Connected to server";
-    reconnectBtn.disabled = true;
   } else {
     statusDot.classList.remove("connected");
     statusText.textContent = "Disconnected";
-    reconnectBtn.disabled = false;
   }
+  // Always enable reconnect button
+  reconnectBtn.disabled = false;
 }
 
 function updateTabCount() {

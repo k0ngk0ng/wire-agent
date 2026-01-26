@@ -45,9 +45,10 @@ function connect() {
     ws.onmessage = async (event) => {
       try {
         const message = JSON.parse(event.data);
+        console.log("[WireAgent] Received:", message.type, message.action || "");
         await handleServerMessage(message);
       } catch (err) {
-        // Silent - don't log parse errors
+        console.warn("[WireAgent] Message handling error:", err);
       }
     };
 
@@ -221,6 +222,7 @@ async function handleServerMessage(message) {
 
 async function executeCommand(command) {
   const { id, action, params } = command;
+  console.log("[WireAgent] Executing:", action, params);
 
   try {
     // Extract tabId from executorId if present
